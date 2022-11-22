@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ovms-prometheus
+  namespace: ovms-prometheus
+  labels:
+    name: ovms-prometheus
+    app: ovms-prometheus
+spec:
+  restartPolicy: Always
+  containers:
+  - name: ovms
+    image: quay.io/roxenham/ovms-prometheus:latest
+    resources:
+      requests:
+        memory: "500Mi"
+        cpu: "2"
+      limits:
+        memory: "500Mi"
+        cpu: "2"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ovms-prometheus
+  name: ovms-prometheus
+  namespace: ovms-prometheus
+spec:
+  ports:
+  - port: 8000
+    protocol: TCP
+    targetPort: 8000
+    name: web
+  selector:
+    app: ovms-prometheus
+  type: ClusterIP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    k8s-app: ovms-prometheus
+  name: ovms-prometheus
+  namespace: ovms-prometheus
+spec:
+  endpoints:
+  - interval: 30s
+    port: web
+    scheme: http
+    path: /metrics
+  selector:
+    matchLabels:
+      app: ovms-prometheus
